@@ -42,6 +42,29 @@ app.post('/ubs', async (req, res) => {
     }
 })
 
+app.patch('/ubs/:ubs_id', async (req, res) => {
+
+    const { ubs_id} = req.params
+
+    const nome  = req.body.nome
+    const cidade = req.body.cidade
+    const comp = req.body.complemento
+    const numero = req.body.numero
+
+
+    try{
+        const consulta = await pool.query(`SELECT * FROM ubs WHERE id_ubs = ($1)`, [ubs_id])
+        if (!consulta.rows[0]){
+            return res.status(400).send('ID não cadastrado no banco de dados')
+        }
+
+        const updateUser = await pool.query(`UPDATE ubs SET ubs_name = ($1), ubs_cidade = ($2), ubs_complemento = ($3), ubs_phonenumber = ($4) WHERE id_ubs = ($5) RETURNING *`, [ nome, cidade, comp, numero, ubs_id])
+        return res.status(200).send(updateUser.rows)
+    } catch(erro) {
+        return res.status(400).send(erro)
+    }
+
+})
 /*
 NÃO SERIA O CERTO DELETAR UMA LINHA DA TABELA TÃO IMPORTANTE POR MEIO DA API A NÃO SER QUE SEJA
 ALGUEM QUE SAIBA O QUE ESTÁ FAZENDO. 
@@ -112,7 +135,6 @@ app.patch('/user/:ubs_id/:user_id', async (req, res) => {
 
     const { ubs_id, user_id} = req.params
 
-    const user_name = req.body.user_name
     const hashePassoword = await bcrypt.hash(req.body.password, 10)
     const user_occupation  = req.body.user_occupation
 
@@ -123,12 +145,26 @@ app.patch('/user/:ubs_id/:user_id', async (req, res) => {
             return res.status(400).send('A operação não pode ser concluida')
         }
 
-        const updateUser = await pool.query(`UPDATE users SET user_name = ($1), user_password = ($2), user_occupation = ($3), fk_id_ubs = ($4) RETURNING *`[user_name, hashePassoword, user_occupation, ubs_id])
+        const updateUser = await pool.query(`UPDATE users SET user_password = ($1), user_occupation = ($2), fk_id_ubs = ($3) WHERE user_id = ($4) RETURNING *`, [ hashePassoword, user_occupation, ubs_id, user_id])
         return res.status(200).send(updateUser.rows)
     } catch(erro) {
         return res.status(400).send(erro)
     }
 
+})
+
+app.delete('/user/:user_id', async (req, res) =>{
+    const { user_id } = req.params
+    try {
+        const delUser = await pool.query('DELETE FROM users WHERE user_id = ($1) RETURNING *',[user_id])
+        return res.status(200).send({
+            message: 'Usuário deletado com Sucesso',
+            delUser: delUser.rows
+
+        })
+    } catch(erro) {
+        return res.status(400).send(erro)
+    }
 })
 
 
