@@ -168,17 +168,143 @@ app.delete('/user/:user_id', async (req, res) =>{
 })
 
 
-// ROTAS DA TABELA 'pacientes'
-
-
-
-
-
-
-
 // ROTAS DA TABELA 'avisos'
+app.get('/avisos', async (req, res) => {
+    try {
+        const { rows } = await pool.query('SELECT * FROM avisos')
+        return res.status(200).send(rows)
+    } catch(erro) {
+        return res.status(400).send(erro)
+    }
+})
+
+app.post('/avisos', async (req, res) => {
+
+    const avisos_img =  req.body.avisos_img
+    const avisos_text =  req.body.avisos_text
+    const avisos_details =  req.body.avisos_details
+
+    try{
+        const newAvisos = await pool.query(`INSERT INTO avisos(avisos_img, avisos_text, avisos_details) VALUES ($1 , $2, $3) RETURNING *`, [avisos_img, avisos_text, avisos_details])
+        return res.status(201).send(newAvisos.rows)
+    } catch(erro) {
+        res.status(500).send(erro);
+    }
+})
+
+app.patch('/avisos/:avisos_id', async (req, res) => {
+
+    const { avisos_id } = req.params
+
+    const avisos_img = req.body.avisos_img
+    const avisos_text  = req.body.avisos_text
+    const avisos_details  = req.body.avisos_details
 
 
+    try{
+        const consulta = await pool.query(`SELECT * FROM avisos WHERE avisos_id = ($1)`, [avisos_id])
+        if (!consulta.rows[0]){
+            return res.status(400).send('A operação não pode ser concluida')
+        }
+        const updateAvisos = await pool.query(`UPDATE avisos SET avisos_img = ($1), avisos_text = ($2), avisos_details = ($3) WHERE avisos_id = ($4) RETURNING *`,[avisos_img, avisos_text, avisos_details, avisos_id])
+        return res.status(200).send(updateAvisos.rows)
+    } catch(erro) {
+        return res.status(400).send(erro)
+    }
+
+})
+
+app.delete('/avisos/:avisos_id', async (req, res) =>{
+    const { avisos_id } = req.params
+    try {
+        const delAvisos = await pool.query('DELETE FROM avisos WHERE avisos_id = ($1) RETURNING *',[avisos_id])
+        return res.status(200).send({
+            message: 'Aviso deletado com Sucesso',
+            delAvisos: delAvisos.rows
+
+        })
+    } catch(erro) {
+        return res.status(400).send(erro)
+    }
+})
+
+
+app.get('/pacientes', async(req, res) => {
+    try {
+        const { rows } = await pool.query('SELECT * FROM pacientes')
+        return res.status(200).send(rows)
+    } catch(erro) {
+        return res.status(400).send(erro)
+    }
+})
+
+app.get('/pacientes/:fk_id_ubs', async (req, res) => {
+    const { fk_id_ubs }  = req.params
+    try {
+        const todos_da_ubs = await pool.query('SELECT * FROM pacientes WHERE fk_id_ubs = ($1)', [fk_id_ubs])
+        return res.status(200).send(todos_da_ubs.rows)
+    } catch(erro) {
+        return res.status(400).send(erro)
+    }
+})
+
+
+app.post('/pacientes/:fk_id_ubs', async (req, res) => {
+
+    const paciente_name = req.body.paciente_name 
+    const nascimento = req.body.nascimento
+    const imgexam = req.body.imgexam
+    const iniciais = req.body.iniciais
+    
+    const { fk_id_ubs } = req.params
+
+    let tPacientes = ''
+    try{
+        tPacientes = await pool.query(`SELECT * FROM pacientes WHERE paciente_name = ($1)`, [paciente_name])
+
+        if (!tPacientes.rows[0]){
+            tPacientes = await pool.query(`INSERT INTO pacientes(paciente_name, nascimento, imgexam, iniciais, fk_id_ubs) VALUES ($1 , $2, $3, $4, $5) RETURNING *`, [ paciente_name, nascimento, imgexam, iniciais, fk_id_ubs ])
+        }
+        
+        return res.status(201).send(tPacientes.rows)
+    } catch(erro) {
+        res.status(500).send(erro);
+    }
+})
+
+app.patch('/pacientes/:fk_id_ubs/:paciente_id', async (req, res) => {
+
+    const { fk_id_ubs, paciente_id} = req.params
+
+    const paciente_name = req.body.paciente_name 
+    const nascimento = req.body.nascimento
+    const imgexam = req.body.imgexam
+    const iniciais = req.body.iniciais
+
+
+        const consulta = await pool.query(`SELECT * FROM pacientes WHERE fk_id_ubs = ($1) AND paciente_id = ($2)`, [fk_id_ubs, paciente_id])
+        if (!consulta.rows[0]){
+            return res.status(400).send('A operação não pode ser concluida')
+        }
+
+        const updatePaciente = await pool.query(`UPDATE pacientes SET paciente_name = ($1), nascimento = ($2), imgexam = ($3), iniciais = ($4), fk_id_ubs = ($5), paciente_id = ($6) RETURNING *`[ paciente_name, nascimento, imgexam, iniciais , fk_id_ubs, paciente_id ])
+        return res.status(200).send(updatePaciente.rows)
+})
+
+
+app.delete('/pacientes/:paciente_id', async (req, res) =>{
+    const { paciente_id } = req.params
+    try {
+        const delPaciente = await pool.query('DELETE FROM pacientes WHERE paciente_id = ($1) RETURNING *',[paciente_id])
+        return res.status(200).send({
+            message: 'Paciente deletado com Sucesso',
+            delPaciente: delPaciente.rows
+
+        })
+    } catch(erro) {
+        return res.status(400).send(erro)
+    }
+})
 
 
 
