@@ -1,7 +1,7 @@
 {
   "name": "API",
   "version": "1.0.0",
-  "description": "",
+  "description": "API base para o sistema TB-KOCH",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
